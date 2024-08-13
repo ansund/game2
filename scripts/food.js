@@ -1,13 +1,13 @@
 // Food array
 const food = [];
-const foodCount = 50; // Number of food particles
+const foodCount = 500; // Number of food particles
 
 // Function to generate food
 function generateFood() {
   for (let i = 0; i < foodCount; i++) {
     food.push({
-      x: Math.random() * canvas.width,
-      y: Math.random() * canvas.height,
+      x: Math.random() * worldWidth,
+      y: Math.random() * worldHeight,
       radius: 5,
       color: getRandomColor(),
     });
