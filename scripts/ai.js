@@ -11,6 +11,8 @@ function createAIBlob() {
     dx: Math.random() * 2 - 1,
     dy: Math.random() * 2 - 1,
     foodEaten: 0,
+    score: 0,
+    name: `AI ${Math.floor(Math.random() * 1000)}`,
   };
 }
 
@@ -60,10 +62,19 @@ function updateAIBlobs() {
         });
       }
     }
+
+    // Update blob speed based on size
+    blob.speed = 3 * (20 / blob.radius);
+    blob.score = calculateScore(blob);
   });
 }
 
 function growAIBlob(blob) {
   blob.radius += 0.5;
   blob.foodEaten++;
+  blob.score = calculateScore(blob);
+}
+
+function generateNewAIBlob() {
+  aiBlobs.push(createAIBlob());
 }

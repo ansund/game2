@@ -22,7 +22,13 @@ const player = {
   dx: 0,
   dy: 0,
   foodEaten: 0, // Add this line to track food eaten
+  score: 0,
+  name: "Player",
 };
+
+// Leaderboard settings
+const leaderboardSize = 5;
+let leaderboard = [];
 
 // Camera position
 const camera = {
@@ -38,6 +44,8 @@ generateAIBlobs();
 function growPlayer() {
   player.radius += 0.5;
   player.foodEaten++; // Increment the food eaten counter
+  player.score = calculateScore(player);
+  updateLeaderboard();
 
   // Spawn a new food item
   food.push({
@@ -45,6 +53,41 @@ function growPlayer() {
     y: Math.random() * worldHeight,
     radius: 5,
     color: getRandomColor(),
+  });
+}
+
+// Function to calculate score
+function calculateScore(blob) {
+  return Math.floor(blob.radius * 10 + blob.foodEaten * 5);
+}
+
+// Function to update leaderboard
+function updateLeaderboard() {
+  leaderboard = [player, ...aiBlobs]
+    .sort((a, b) => b.score - a.score)
+    .slice(0, leaderboardSize);
+}
+
+// Function to draw leaderboard
+function drawLeaderboard() {
+  const padding = 10;
+  const width = 200;
+  const height = 30 + leaderboardSize * 25;
+
+  ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
+  ctx.fillRect(canvas.width - width - padding, padding, width, height);
+
+  ctx.fillStyle = "white";
+  ctx.font = "20px Arial";
+  ctx.fillText("Leaderboard", canvas.width - width + 10, padding + 25);
+
+  ctx.font = "16px Arial";
+  leaderboard.forEach((blob, index) => {
+    ctx.fillText(
+      `${index + 1}. ${blob.name}: ${blob.score}`,
+      canvas.width - width + 10,
+      padding + 50 + index * 25
+    );
   });
 }
 
@@ -112,6 +155,54 @@ function displayDebugInfo() {
   ctx.fillText(`Food Eaten: ${player.foodEaten}`, 10, 20);
 }
 
+// Function to check blob collisions
+function checkBlobCollisions() {
+  // Check player collision with AI blobs
+  for (let i = aiBlobs.length - 1; i >= 0; i--) {
+    if (checkCollision(player, aiBlobs[i])) {
+      if (player.radius > aiBlobs[i].radius * 1.1) {
+        // Player eats AI blob
+        player.radius += aiBlobs[i].radius * 0.1;
+        aiBlobs.splice(i, 1);
+        generateNewAIBlob();
+      } else if (aiBlobs[i].radius > player.radius * 1.1) {
+        // AI blob eats player
+        gameOver();
+        return;
+      }
+    }
+  }
+
+  // Check AI blob collisions with each other
+  for (let i = 0; i < aiBlobs.length; i++) {
+    for (let j = i + 1; j < aiBlobs.length; j++) {
+      if (checkCollision(aiBlobs[i], aiBlobs[j])) {
+        if (aiBlobs[i].radius > aiBlobs[j].radius * 1.1) {
+          // Larger blob eats smaller blob
+          aiBlobs[i].radius += aiBlobs[j].radius * 0.1;
+          aiBlobs.splice(j, 1);
+          generateNewAIBlob();
+          j--;
+        } else if (aiBlobs[j].radius > aiBlobs[i].radius * 1.1) {
+          // Larger blob eats smaller blob
+          aiBlobs[j].radius += aiBlobs[i].radius * 0.1;
+          aiBlobs.splice(i, 1);
+          generateNewAIBlob();
+          i--;
+          break;
+        }
+      }
+    }
+  }
+}
+
+// Function to handle game over
+function gameOver() {
+  alert("Game Over! You were eaten by a larger blob.");
+  // Reset the game or implement your preferred game over behavior
+  location.reload();
+}
+
 // Game loop
 function gameLoop() {
   // Clear canvas
@@ -122,6 +213,9 @@ function gameLoop() {
 
   // Update AI blobs
   updateAIBlobs();
+
+  // Check blob collisions
+  checkBlobCollisions();
 
   // Draw background grid
   drawGrid();
@@ -168,6 +262,12 @@ function gameLoop() {
   if (DEBUG_MODE) {
     displayDebugInfo();
   }
+
+  // Update leaderboard
+  updateLeaderboard();
+
+  // Draw leaderboard
+  drawLeaderboard();
 
   // Request next frame
   requestAnimationFrame(gameLoop);

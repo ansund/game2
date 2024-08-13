@@ -22,9 +22,10 @@ function getRandomColor() {
   return `rgb(${r}, ${g}, ${b})`;
 }
 
-function checkCollision(player, foodItem) {
-  const dx = player.x - foodItem.x;
-  const dy = player.y - foodItem.y;
+// Modify the checkCollision function to be more generic
+function checkCollision(blob1, blob2) {
+  const dx = blob1.x - blob2.x;
+  const dy = blob1.y - blob2.y;
   const distance = Math.sqrt(dx * dx + dy * dy);
-  return distance < player.radius + foodItem.radius;
+  return distance < blob1.radius + blob2.radius;
 }
