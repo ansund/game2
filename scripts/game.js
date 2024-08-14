@@ -24,6 +24,8 @@ const player = {
   foodEaten: 0, // Add this line to track food eaten
   score: 0,
   name: "Player",
+  finalCameraX: 0, // Add this line to store the final camera X position
+  finalCameraY: 0, // Add this line to store the final camera Y position
 };
 
 // Leaderboard settings
@@ -93,6 +95,8 @@ function drawLeaderboard() {
 
 // Function to update player position
 function updatePlayer() {
+  if (isGameOver) return; // Don't update player position if game is over
+
   // Calculate new position
   let newX = player.x + player.dx;
   let newY = player.y + player.dy;
@@ -201,21 +205,25 @@ let isGameOver = false;
 
 function gameOver() {
   isGameOver = true;
+  player.radius = 0; // Set player radius to 0 to make it disappear
+  // Store the final camera position
+  player.finalCameraX = camera.x;
+  player.finalCameraY = camera.y;
 }
 
 // Function to draw game over menu
 function drawGameOverMenu() {
-  // Darken the background
-  ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
+  // Semi-transparent overlay
+  ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
   // Draw menu box
   const menuWidth = 400;
-  const menuHeight = 300;
+  const menuHeight = 350;
   const menuX = (canvas.width - menuWidth) / 2;
   const menuY = (canvas.height - menuHeight) / 2;
 
-  ctx.fillStyle = "white";
+  ctx.fillStyle = "rgba(255, 255, 255, 0.8)";
   ctx.fillRect(menuX, menuY, menuWidth, menuHeight);
 
   // Draw text
@@ -243,6 +251,13 @@ function drawGameOverMenu() {
   ctx.fillStyle = "white";
   ctx.font = "24px Arial";
   ctx.fillText("New Game", canvas.width / 2, menuY + 240);
+
+  // Draw Continue Game button
+  ctx.fillStyle = "#2ecc71";
+  ctx.fillRect(menuX + 100, menuY + 270, 200, 60);
+  ctx.fillStyle = "white";
+  ctx.font = "24px Arial";
+  ctx.fillText("Continue Game", canvas.width / 2, menuY + 310);
 }
 
 // Game loop
@@ -250,13 +265,14 @@ function gameLoop() {
   // Clear canvas
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  if (isGameOver) {
-    drawGameOverMenu();
-    return;
-  }
-
   // Update player position
   updatePlayer();
+
+  // Use the final camera position if the game is over
+  if (isGameOver) {
+    camera.x = player.finalCameraX;
+    camera.y = player.finalCameraY;
+  }
 
   // Update AI blobs
   updateAIBlobs();
@@ -298,12 +314,14 @@ function gameLoop() {
     ctx.closePath();
   });
 
-  // Draw player (always at the center of the screen)
-  ctx.beginPath();
-  ctx.arc(canvas.width / 2, canvas.height / 2, player.radius, 0, Math.PI * 2);
-  ctx.fillStyle = player.color;
-  ctx.fill();
-  ctx.closePath();
+  // Draw player (always at the center of the screen) if the game is not over
+  if (!isGameOver) {
+    ctx.beginPath();
+    ctx.arc(canvas.width / 2, canvas.height / 2, player.radius, 0, Math.PI * 2);
+    ctx.fillStyle = player.color;
+    ctx.fill();
+    ctx.closePath();
+  }
 
   // Display debug information if in debug mode
   if (DEBUG_MODE) {
@@ -315,6 +333,11 @@ function gameLoop() {
 
   // Draw leaderboard
   drawLeaderboard();
+
+  // Draw game over menu if the game is over
+  if (isGameOver) {
+    drawGameOverMenu();
+  }
 
   // Request next frame
   requestAnimationFrame(gameLoop);
@@ -374,7 +397,7 @@ canvas.addEventListener("click", handleClick);
 function handleClick(e) {
   if (isGameOver) {
     const menuWidth = 400;
-    const menuHeight = 300;
+    const menuHeight = 350;
     const menuX = (canvas.width - menuWidth) / 2;
     const menuY = (canvas.height - menuHeight) / 2;
 
@@ -384,24 +407,53 @@ function handleClick(e) {
       e.clientY >= menuY + 200 &&
       e.clientY <= menuY + 260
     ) {
-      restartGame();
+      restartGame(true);
+    } else if (
+      e.clientX >= menuX + 100 &&
+      e.clientX <= menuX + 300 &&
+      e.clientY >= menuY + 270 &&
+      e.clientY <= menuY + 330
+    ) {
+      restartGame(false);
     }
   }
 }
 
-function restartGame() {
-  // Reset game state
-  player.x = worldWidth / 2;
-  player.y = worldHeight / 2;
-  player.radius = 20;
-  player.foodEaten = 0;
-  player.score = 0;
+function restartGame(newGame) {
+  if (newGame) {
+    // Reset game state
+    player.x = worldWidth / 2;
+    player.y = worldHeight / 2;
+    player.radius = 20;
+    player.foodEaten = 0;
+    player.score = 0;
 
-  // Clear and regenerate food and AI blobs
-  food.length = 0;
-  aiBlobs.length = 0;
-  generateFood();
-  generateAIBlobs();
+    // Clear and regenerate food and AI blobs
+    food.length = 0;
+    aiBlobs.length = 0;
+    generateFood();
+    generateAIBlobs();
+  } else {
+    // Spawn player at a random position
+    player.x = Math.random() * worldWidth;
+    player.y = Math.random() * worldHeight;
+    player.radius = 20;
+    player.foodEaten = 0;
+    player.score = 0;
+
+    // Remove AI blobs that are too close to the new player spawn point
+    const safeDistance = 100;
+    aiBlobs = aiBlobs.filter((blob) => {
+      const dx = blob.x - player.x;
+      const dy = blob.y - player.y;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+      return distance > safeDistance;
+    });
+  }
+
+  // Reset camera position
+  camera.x = player.x - canvas.width / 2;
+  camera.y = player.y - canvas.height / 2;
 
   // Reset game over state
   isGameOver = false;
