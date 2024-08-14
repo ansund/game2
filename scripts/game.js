@@ -261,6 +261,8 @@ function drawGameOverMenu() {
 }
 
 // Game loop
+let animationFrameId;
+
 function gameLoop() {
   // Clear canvas
   ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -340,7 +342,7 @@ function gameLoop() {
   }
 
   // Request next frame
-  requestAnimationFrame(gameLoop);
+  animationFrameId = requestAnimationFrame(gameLoop);
 }
 
 // Function to handle mouse movement
@@ -420,6 +422,11 @@ function handleClick(e) {
 }
 
 function restartGame(newGame) {
+  // Cancel the previous game loop
+  if (animationFrameId) {
+    cancelAnimationFrame(animationFrameId);
+  }
+
   if (newGame) {
     // Reset game state
     player.x = worldWidth / 2;
@@ -427,6 +434,7 @@ function restartGame(newGame) {
     player.radius = 20;
     player.foodEaten = 0;
     player.score = 0;
+    player.speed = 3; // Reset player speed
 
     // Clear and regenerate food and AI blobs
     food.length = 0;
@@ -440,6 +448,7 @@ function restartGame(newGame) {
     player.radius = 20;
     player.foodEaten = 0;
     player.score = 0;
+    player.speed = 3; // Reset player speed
 
     // Remove AI blobs that are too close to the new player spawn point
     const safeDistance = 100;
@@ -448,6 +457,11 @@ function restartGame(newGame) {
       const dy = blob.y - player.y;
       const distance = Math.sqrt(dx * dx + dy * dy);
       return distance > safeDistance;
+    });
+
+    // Reset AI blob speeds
+    aiBlobs.forEach((blob) => {
+      blob.speed = 3;
     });
   }
 
@@ -459,5 +473,5 @@ function restartGame(newGame) {
   isGameOver = false;
 
   // Restart game loop
-  requestAnimationFrame(gameLoop);
+  gameLoop();
 }
