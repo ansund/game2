@@ -197,16 +197,63 @@ function checkBlobCollisions() {
 }
 
 // Function to handle game over
+let isGameOver = false;
+
 function gameOver() {
-  alert("Game Over! You were eaten by a larger blob.");
-  // Reset the game or implement your preferred game over behavior
-  location.reload();
+  isGameOver = true;
+}
+
+// Function to draw game over menu
+function drawGameOverMenu() {
+  // Darken the background
+  ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  // Draw menu box
+  const menuWidth = 400;
+  const menuHeight = 300;
+  const menuX = (canvas.width - menuWidth) / 2;
+  const menuY = (canvas.height - menuHeight) / 2;
+
+  ctx.fillStyle = "white";
+  ctx.fillRect(menuX, menuY, menuWidth, menuHeight);
+
+  // Draw text
+  ctx.fillStyle = "black";
+  ctx.font = "30px Arial";
+  ctx.textAlign = "center";
+  ctx.fillText("Game Over!", canvas.width / 2, menuY + 50);
+
+  ctx.font = "20px Arial";
+  ctx.fillText(`Final Score: ${player.score}`, canvas.width / 2, menuY + 90);
+  ctx.fillText(
+    `Food Eaten: ${player.foodEaten}`,
+    canvas.width / 2,
+    menuY + 120
+  );
+  ctx.fillText(
+    `Final Size: ${Math.round(player.radius)}`,
+    canvas.width / 2,
+    menuY + 150
+  );
+
+  // Draw New Game button
+  ctx.fillStyle = "#3498db";
+  ctx.fillRect(menuX + 100, menuY + 200, 200, 60);
+  ctx.fillStyle = "white";
+  ctx.font = "24px Arial";
+  ctx.fillText("New Game", canvas.width / 2, menuY + 240);
 }
 
 // Game loop
 function gameLoop() {
   // Clear canvas
   ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  if (isGameOver) {
+    drawGameOverMenu();
+    return;
+  }
 
   // Update player position
   updatePlayer();
@@ -321,3 +368,44 @@ function drawGrid() {
 
 // Start the game loop
 gameLoop();
+
+canvas.addEventListener("click", handleClick);
+
+function handleClick(e) {
+  if (isGameOver) {
+    const menuWidth = 400;
+    const menuHeight = 300;
+    const menuX = (canvas.width - menuWidth) / 2;
+    const menuY = (canvas.height - menuHeight) / 2;
+
+    if (
+      e.clientX >= menuX + 100 &&
+      e.clientX <= menuX + 300 &&
+      e.clientY >= menuY + 200 &&
+      e.clientY <= menuY + 260
+    ) {
+      restartGame();
+    }
+  }
+}
+
+function restartGame() {
+  // Reset game state
+  player.x = worldWidth / 2;
+  player.y = worldHeight / 2;
+  player.radius = 20;
+  player.foodEaten = 0;
+  player.score = 0;
+
+  // Clear and regenerate food and AI blobs
+  food.length = 0;
+  aiBlobs.length = 0;
+  generateFood();
+  generateAIBlobs();
+
+  // Reset game over state
+  isGameOver = false;
+
+  // Restart game loop
+  requestAnimationFrame(gameLoop);
+}
