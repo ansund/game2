@@ -1,4 +1,4 @@
-const aiBlobs = [];
+let aiBlobs = [];
 const aiCount = 100;
 
 function createAIBlob() {
