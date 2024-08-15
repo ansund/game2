@@ -24,9 +24,38 @@ function generateAIBlobs() {
 
 function updateAIBlobs() {
   aiBlobs.forEach((blob) => {
+    // Find the nearest food
+    let nearestFood = null;
+    let minDistance = Infinity;
+
+    food.forEach((foodItem) => {
+      const dx = foodItem.x - blob.x;
+      const dy = foodItem.y - blob.y;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+
+      if (distance < minDistance) {
+        minDistance = distance;
+        nearestFood = foodItem;
+      }
+    });
+
+    // 80% chance to move towards the nearest food, 20% chance to move randomly
+    if (Math.random() < 0.8 && nearestFood) {
+      const dx = nearestFood.x - blob.x;
+      const dy = nearestFood.y - blob.y;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+
+      blob.dx = (dx / distance) * blob.speed;
+      blob.dy = (dy / distance) * blob.speed;
+    } else {
+      // Move randomly
+      blob.dx = (Math.random() * 2 - 1) * blob.speed;
+      blob.dy = (Math.random() * 2 - 1) * blob.speed;
+    }
+
     // Move the blob
-    let newX = blob.x + blob.dx * blob.speed;
-    let newY = blob.y + blob.dy * blob.speed;
+    let newX = blob.x + blob.dx;
+    let newY = blob.y + blob.dy;
 
     // Bounce off world boundaries
     if (newX - blob.radius < 0 || newX + blob.radius > worldWidth) {
@@ -41,12 +70,6 @@ function updateAIBlobs() {
     // Update blob position
     blob.x = newX;
     blob.y = newY;
-
-    // Occasionally change direction
-    if (Math.random() < 0.02) {
-      blob.dx = Math.random() * 2 - 1;
-      blob.dy = Math.random() * 2 - 1;
-    }
 
     // Check for food collision
     for (let i = food.length - 1; i >= 0; i--) {
