@@ -12,6 +12,8 @@ canvas.height = window.innerHeight;
 const worldWidth = 3000;
 const worldHeight = 3000;
 
+const bullets = [];
+
 const ZOOM_RATE = 0.002; // Adjust this value to change the zoom-out speed
 let currentZoom = 1;
 
@@ -308,6 +310,52 @@ function gameLoop() {
   ctx.fill();
   ctx.closePath();
 
+  // Draw and update bullets
+  for (let i = bullets.length - 1; i >= 0; i--) {
+    const bullet = bullets[i];
+    bullet.x += bullet.dx;
+    bullet.y += bullet.dy;
+
+    // Remove bullets that are out of bounds
+    if (
+      bullet.x < 0 ||
+      bullet.x > worldWidth ||
+      bullet.y < 0 ||
+      bullet.y > worldHeight
+    ) {
+      bullets.splice(i, 1);
+      continue;
+    }
+
+    // Draw bullet
+    ctx.beginPath();
+    ctx.arc(bullet.x, bullet.y, bullet.radius, 0, Math.PI * 2);
+    ctx.fillStyle = bullet.color;
+    ctx.fill();
+    ctx.closePath();
+
+    // Check collision with AI blobs
+    for (let j = aiBlobs.length - 1; j >= 0; j--) {
+      if (checkCollision(bullet, aiBlobs[j])) {
+        // Remove the bullet
+        bullets.splice(i, 1);
+
+        // Damage the AI blob
+        aiBlobs[j].areaPoints -= Math.PI * bullet.radius * bullet.radius;
+        if (aiBlobs[j].areaPoints <= 0) {
+          // If the AI blob is destroyed, remove it and add score to the player
+          player.score += calculateScore(aiBlobs[j]);
+          aiBlobs.splice(j, 1);
+          generateNewAIBlob();
+        } else {
+          // Update the AI blob's radius
+          aiBlobs[j].radius = Math.sqrt(aiBlobs[j].areaPoints / Math.PI);
+        }
+        break;
+      }
+    }
+  }
+
   ctx.restore();
 
   updatePlayer();
@@ -351,6 +399,14 @@ function handleTouchMove(e) {
 // Add event listeners for mouse and touch input
 canvas.addEventListener("mousemove", handleMouseMove);
 canvas.addEventListener("touchmove", handleTouchMove, { passive: false });
+// Add these event listeners after the existing ones
+canvas.addEventListener("click", createBullet);
+canvas.addEventListener("touchstart", createBullet);
+window.addEventListener("keydown", (e) => {
+  if (e.code === "Space") {
+    createBullet();
+  }
+});
 
 // Function to draw background grid
 function drawGrid() {
@@ -456,6 +512,24 @@ function restartGame(newGame) {
   // Reset game over state
   isGameOver = false;
 
+  // Clear bullets array
+  bullets.length = 0;
+
   // Restart game loop
   gameLoop();
+}
+
+// Add this function to create bullets
+function createBullet() {
+  const bulletRadius = player.radius * 0.1;
+  const bulletSpeed = 5;
+  const bullet = {
+    x: player.x,
+    y: player.y,
+    radius: bulletRadius,
+    color: getRandomColor(),
+    dx: player.dx * bulletSpeed,
+    dy: player.dy * bulletSpeed,
+  };
+  bullets.push(bullet);
 }
