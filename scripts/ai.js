@@ -1,5 +1,5 @@
 let aiBlobs = [];
-const aiCount = 100;
+const aiCount = 50;
 
 function createAIBlob() {
   return {
@@ -12,6 +12,7 @@ function createAIBlob() {
     dy: Math.random() * 2 - 1,
     foodEaten: 0,
     score: 0,
+    areaPoints: 400,
     name: `AI ${Math.floor(Math.random() * 1000)}`,
   };
 }
@@ -74,8 +75,9 @@ function updateAIBlobs() {
     // Check for food collision
     for (let i = food.length - 1; i >= 0; i--) {
       if (checkCollision(blob, food[i])) {
+        const foodArea = Math.PI * food[i].radius * food[i].radius;
         food.splice(i, 1);
-        growAIBlob(blob);
+        growAIBlob(blob, foodArea);
         // Spawn new food
         food.push({
           x: Math.random() * worldWidth,
@@ -92,8 +94,9 @@ function updateAIBlobs() {
   });
 }
 
-function growAIBlob(blob) {
-  blob.radius += 0.5;
+function growAIBlob(blob, areaGain) {
+  blob.areaPoints += areaGain;
+  blob.radius = Math.sqrt(blob.areaPoints / Math.PI);
   blob.foodEaten++;
   blob.score = calculateScore(blob);
 }
