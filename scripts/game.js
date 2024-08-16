@@ -340,17 +340,11 @@ function gameLoop() {
         // Remove the bullet
         bullets.splice(i, 1);
 
-        // Damage the AI blob
-        aiBlobs[j].areaPoints -= Math.PI * bullet.radius * bullet.radius;
-        if (aiBlobs[j].areaPoints <= 0) {
-          // If the AI blob is destroyed, remove it and add score to the player
-          player.score += calculateScore(aiBlobs[j]);
-          aiBlobs.splice(j, 1);
-          generateNewAIBlob();
-        } else {
-          // Update the AI blob's radius
-          aiBlobs[j].radius = Math.sqrt(aiBlobs[j].areaPoints / Math.PI);
-        }
+        // Grow the AI blob
+        aiBlobs[j].areaPoints += Math.PI * bullet.radius * bullet.radius;
+        // Update the AI blob's radius
+        aiBlobs[j].radius = Math.sqrt(aiBlobs[j].areaPoints / Math.PI);
+
         break;
       }
     }
