@@ -42,30 +42,6 @@ const camera = {
   y: 0,
 };
 
-// Add event listener for the view map button
-document
-  .getElementById("viewMapButton")
-  .addEventListener("click", toggleMapView);
-
-let isMapView = false;
-let originalCameraX, originalCameraY;
-
-function toggleMapView() {
-  if (isMapView) {
-    // Return to normal view
-    camera.x = originalCameraX;
-    camera.y = originalCameraY;
-    isMapView = false;
-  } else {
-    // Switch to map view
-    originalCameraX = camera.x;
-    originalCameraY = camera.y;
-    camera.x = 0;
-    camera.y = 0;
-    isMapView = true;
-  }
-}
-
 // Generate initial food and AI blobs
 generateFood();
 generateAIBlobs();
@@ -127,7 +103,7 @@ function drawLeaderboard() {
 
 // Function to update player position
 function updatePlayer() {
-  if (isGameOver || isMapView) return; // Don't update player position if game is over or in map view
+  if (isGameOver) return; // Don't update player position if game is over
 
   // Calculate new position
   let newX = player.x + player.dx;
@@ -289,103 +265,54 @@ function gameLoop() {
   // Clear canvas
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  if (isMapView) {
-    // Calculate the scale factor to fit the entire world
-    const scaleX = canvas.width / worldWidth;
-    const scaleY = canvas.height / worldHeight;
-    const scale = Math.min(scaleX, scaleY);
+  // Normal view code with zoom effect
+  ctx.save();
+  ctx.translate(canvas.width / 2, canvas.height / 2);
+  ctx.scale(currentZoom, currentZoom);
+  ctx.translate(-player.x, -player.y);
 
-    // Save the current context state
-    ctx.save();
+  // Draw background grid
+  // drawGrid();
 
-    // Scale the context
-    ctx.scale(scale, scale);
+  // Draw world border
+  drawWorldBorder();
 
-    // Draw the world border
-    ctx.strokeStyle = "black";
-    ctx.lineWidth = 2 / scale;
-    ctx.strokeRect(0, 0, worldWidth, worldHeight);
-
-    // Draw food
-    food.forEach((foodItem) => {
+  // Draw food and check for collisions
+  for (let i = food.length - 1; i >= 0; i--) {
+    const foodItem = food[i];
+    if (checkCollision(player, foodItem)) {
+      food.splice(i, 1);
+      growPlayer(Math.PI * foodItem.radius * foodItem.radius);
+    } else {
       ctx.beginPath();
-      ctx.arc(foodItem.x, foodItem.y, foodItem.radius / scale, 0, Math.PI * 2);
+      ctx.arc(foodItem.x, foodItem.y, foodItem.radius, 0, Math.PI * 2);
       ctx.fillStyle = foodItem.color;
       ctx.fill();
       ctx.closePath();
-    });
-
-    // Draw AI blobs
-    aiBlobs.forEach((blob) => {
-      ctx.beginPath();
-      ctx.arc(blob.x, blob.y, blob.radius / scale, 0, Math.PI * 2);
-      ctx.fillStyle = blob.color;
-      ctx.fill();
-      ctx.closePath();
-    });
-
-    // Draw player
-    ctx.beginPath();
-    ctx.arc(player.x, player.y, player.radius / scale, 0, Math.PI * 2);
-    ctx.fillStyle = player.color;
-    ctx.fill();
-    ctx.closePath();
-
-    // Restore the context state
-    ctx.restore();
-  } else {
-    // Normal view code with zoom effect
-    ctx.save();
-    ctx.translate(canvas.width / 2, canvas.height / 2);
-    ctx.scale(currentZoom, currentZoom);
-    ctx.translate(-player.x, -player.y);
-
-    // Draw background grid
-    // drawGrid();
-
-    // Draw world border
-    drawWorldBorder();
-
-    // Draw food and check for collisions
-    for (let i = food.length - 1; i >= 0; i--) {
-      const foodItem = food[i];
-      if (checkCollision(player, foodItem)) {
-        food.splice(i, 1);
-        growPlayer(Math.PI * foodItem.radius * foodItem.radius);
-      } else {
-        ctx.beginPath();
-        ctx.arc(foodItem.x, foodItem.y, foodItem.radius, 0, Math.PI * 2);
-        ctx.fillStyle = foodItem.color;
-        ctx.fill();
-        ctx.closePath();
-      }
     }
+  }
 
-    // Draw AI blobs
-    aiBlobs.forEach((blob) => {
-      ctx.beginPath();
-      ctx.arc(blob.x, blob.y, blob.radius, 0, Math.PI * 2);
-      ctx.fillStyle = blob.color;
-      ctx.fill();
-      ctx.closePath();
-    });
-
-    // Draw player
+  // Draw AI blobs
+  aiBlobs.forEach((blob) => {
     ctx.beginPath();
-    ctx.arc(player.x, player.y, player.radius, 0, Math.PI * 2);
-    ctx.fillStyle = player.color;
+    ctx.arc(blob.x, blob.y, blob.radius, 0, Math.PI * 2);
+    ctx.fillStyle = blob.color;
     ctx.fill();
     ctx.closePath();
+  });
 
-    ctx.restore();
-  }
+  // Draw player
+  ctx.beginPath();
+  ctx.arc(player.x, player.y, player.radius, 0, Math.PI * 2);
+  ctx.fillStyle = player.color;
+  ctx.fill();
+  ctx.closePath();
 
-  // Update game logic
-  if (!isMapView) {
-    updatePlayer();
-    updateAIBlobs();
-    checkBlobCollisions();
-  }
+  ctx.restore();
+
+  updatePlayer();
+  updateAIBlobs();
+  checkBlobCollisions();
 
   // Update leaderboard
   updateLeaderboard();
