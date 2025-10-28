@@ -22,7 +22,7 @@ Cell Eater is a simple browser-based game inspired by agar.io. This README provi
 4. Once the container is running, open your web browser and go to:
 
    ```
-   http://localhost:8080
+   http://localhost:8081
    ```
 
 5. You should now see the game running in your browser.

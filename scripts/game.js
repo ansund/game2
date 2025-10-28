@@ -47,6 +47,7 @@ const camera = {
 // Generate initial food and AI blobs
 generateFood();
 generateAIBlobs();
+generateEnemies();
 
 // Function to grow player and spawn new food
 function growPlayer(areaGain) {
@@ -294,14 +295,7 @@ function gameLoop() {
     }
   }
 
-  // Draw AI blobs
-  aiBlobs.forEach((blob) => {
-    ctx.beginPath();
-    ctx.arc(blob.x, blob.y, blob.radius, 0, Math.PI * 2);
-    ctx.fillStyle = blob.color;
-    ctx.fill();
-    ctx.closePath();
-  });
+  drawAIBlobs();
 
   // Draw player
   ctx.beginPath();
@@ -348,12 +342,31 @@ function gameLoop() {
         break;
       }
     }
+    //check for enemy collisions
+    for (let i = enemies.length - 1; i >= 0; i--) {
+      const enemy = enemies[i];
+      for (let j = bullets.length - 1; j >= 0; j--) {
+        const bullet = bullets[j];
+        if (checkCollision(enemy, bullet)) {
+          // Remove the bullet
+          bullets.splice(i, 1);
+
+          // Grow the AI blob
+          enemies[j].areaPoints += Math.PI * bullet.radius * bullet.radius;
+          // Update the AI blob's radius
+          enemies[j].radius = Math.sqrt(enemies[j].areaPoints / Math.PI);
+          break;
+        }
+      }
+    }
   }
 
+  drawEnemies();
   ctx.restore();
 
   updatePlayer();
   updateAIBlobs();
+  updateEnemies();
   checkBlobCollisions();
 
   // Update leaderboard
@@ -470,11 +483,13 @@ function restartGame(newGame) {
     player.score = 0;
     player.speed = 3; // Reset player speed
 
-    // Clear and regenerate food and AI blobs
+    // Clear and regenerate food, enemies and AI blobs
     food.length = 0;
     aiBlobs.length = 0;
+    enemies.length = 0;
     generateFood();
     generateAIBlobs();
+    generateEnemies();
   } else {
     // Spawn player at a random position
     player.x = Math.random() * worldWidth;

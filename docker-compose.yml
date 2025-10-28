@@ -2,7 +2,7 @@ services:
   web:
     build: .
     ports:
-      - "8080:8080"
+      - "8081:8081"
     volumes:
       - ./:/app
-    command: http-server -p 8080 --cors -c-1
+    command: http-server -p 8081 --cors -c-1

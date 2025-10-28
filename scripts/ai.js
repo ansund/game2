@@ -104,3 +104,13 @@ function growAIBlob(blob, areaGain) {
 function generateNewAIBlob() {
   aiBlobs.push(createAIBlob());
 }
+
+function drawAIBlobs() {
+  aiBlobs.forEach((blob) => {
+    ctx.beginPath();
+    ctx.arc(blob.x, blob.y, blob.radius, 0, Math.PI * 2);
+    ctx.fillStyle = blob.color;
+    ctx.fill();
+    ctx.closePath();
+  });
+}
