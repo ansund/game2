@@ -16,7 +16,7 @@ Cell Eater is a simple browser-based game inspired by agar.io. This README provi
 3. Build and run the Docker container:
 
    ```
-   docker-compose up --build
+   docker compose up --build
    ```
 
 4. Once the container is running, open your web browser and go to:
