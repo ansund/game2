@@ -178,6 +178,15 @@ function checkBlobCollisions() {
     }
   }
 
+  // Check player collision with enemies
+  for (let i = enemies.length - 1; i >= 0; i--) {
+    if (checkCollision(player, enemies[i])) {
+      // Player touches enemy - game over
+      gameOver();
+      return;
+    }
+  }
+
   // Check AI blob collisions with each other
   for (let i = 0; i < aiBlobs.length; i++) {
     for (let j = i + 1; j < aiBlobs.length; j++) {
